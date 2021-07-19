@@ -29,7 +29,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:layoutDirection="ltr">
-
+<!--
         <FrameLayout
             android:id="@+id/left_hvac_container"
             android:layout_width="wrap_content"
@@ -62,10 +62,10 @@
                 systemui:hvacMinValue="@dimen/hvac_min_value"
                 systemui:hvacPivotOffset="60dp"
                 systemui:hvacPropertyId="358614275"
-                systemui:hvacTempFormat="%.0f\u00B0"
+                systemui:hvacTempFormat="%.0f"
             />
         </FrameLayout>
-
+-->
         <FrameLayout
             android:id="@+id/clock_container"
             android:layout_width="wrap_content"
@@ -144,7 +144,7 @@
                 systemui:hvacMinValue="@dimen/hvac_min_value"
                 systemui:hvacPivotOffset="60dp"
                 systemui:hvacPropertyId="358614275"
-                systemui:hvacTempFormat="%.0f\u00B0"
+                systemui:hvacTempFormat="%.0f%%"
             />
         </FrameLayout>
     </RelativeLayout>

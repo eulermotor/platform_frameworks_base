@@ -23,6 +23,7 @@ import android.widget.TextView;
 
 import com.android.systemui.R;
 
+import android.util.Log;
 /**
  * Simple text display of HVAC properties, It is designed to show temperature and is configured in
  * the XML.
@@ -37,6 +38,7 @@ public class TemperatureTextView extends TextView implements TemperatureView {
     private final int mPropertyId;
     private final String mTempFormat;
     private boolean mDisplayFahrenheit = false;
+    public static final String TAG = "TTV";
 
     public TemperatureTextView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -44,7 +46,7 @@ public class TemperatureTextView extends TextView implements TemperatureView {
         mAreaId = typedArray.getInt(R.styleable.TemperatureView_hvacAreaId, -1);
         mPropertyId = typedArray.getInt(R.styleable.TemperatureView_hvacPropertyId, -1);
         String format = typedArray.getString(R.styleable.TemperatureView_hvacTempFormat);
-        mTempFormat = (format == null) ? "%.1f\u00B0" : format;
+        mTempFormat = (format == null) ? "%.1f" : format;
     }
 
     /**
@@ -55,12 +57,14 @@ public class TemperatureTextView extends TextView implements TemperatureView {
     @Override
     public void setTemp(float temp) {
         if (Float.isNaN(temp)) {
+        Log.d(TAG,"Value is NaN");
             setText("--");
             return;
         }
-        if (mDisplayFahrenheit) {
-            temp = convertToFahrenheit(temp);
-        }
+//        if (mDisplayFahrenheit) {
+//            temp = convertToFahrenheit(temp);
+//        }
+        Log.d(TAG,"Value is " + String.format(mTempFormat, temp));
         setText(String.format(mTempFormat, temp));
     }
 

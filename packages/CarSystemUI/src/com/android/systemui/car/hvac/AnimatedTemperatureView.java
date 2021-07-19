@@ -193,11 +193,11 @@ public class AnimatedTemperatureView extends FrameLayout implements TemperatureV
      */
     @Override
     public void setTemp(float temp) {
-        if (mDisplayInFahrenheit) {
-            temp = convertToFahrenheit(temp);
-        }
+        //if (mDisplayInFahrenheit) {
+        //    temp = convertToFahrenheit(temp);
+        //}
         mTextAnimator.setTemp(temp);
-        if (Float.isNaN(temp)) {
+        /*if (Float.isNaN(temp)) {
             mBackgroundAnimator.hideCircle();
             return;
         }
@@ -219,7 +219,7 @@ public class AnimatedTemperatureView extends FrameLayout implements TemperatureV
             mBackgroundColor.setColor(color);
         }
 
-        mBackgroundAnimator.animateOpen();
+        mBackgroundAnimator.animateOpen(); */
     }
 
     @Override

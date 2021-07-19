@@ -42,6 +42,9 @@ import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import vendor.euler.can_data.V1_0.ICanData;
+import android.os.*;
+
 /**
  * Manages the connection to the Car service and delegates value changes to the registered
  * {@link TemperatureView}s
@@ -50,6 +53,8 @@ import javax.inject.Singleton;
 public class HvacController {
     public static final String TAG = "HvacController";
     private static final boolean DEBUG = true;
+    private static float can_value = 20;
+    private static float prev_can_value = 20;
 
     private final CarServiceProvider mCarServiceProvider;
     private final Set<TemperatureView> mRegisteredViews = new HashSet<>();
@@ -57,6 +62,55 @@ public class HvacController {
     private CarHvacManager mHvacManager;
     private HashMap<HvacKey, List<TemperatureView>> mTempComponents = new HashMap<>();
 
+    private static ICanData candata;
+    private static TemperatureView tv;
+    private Handler handler = new Handler() {
+    @Override
+    public void handleMessage(Message msg) {
+        Bundle b = msg.getData();
+        String key = b.getString("batKey");
+        if (prev_can_value != can_value) {
+            Log.d(TAG, "Can value is same; not updating");
+            tv.setTemp(can_value);
+        }
+    }
+    };
+
+    private Runnable separateThread = new Runnable() {
+    @Override
+    public void run() {
+        updateBattery();
+    }
+    };
+
+
+    private void updateBattery() {
+    while (true) {
+    Log.d(TAG, "Getting Can value in updateBattery");
+        try {
+             Log.d(TAG, "Getting Can value in updateBattery - try");
+             candata = ICanData.getService(true);
+             Log.d(TAG, "Getting Can value in updateBattery - getting version");
+             prev_can_value = can_value;
+             can_value = candata.getVersion();
+             Log.d(TAG, "Can value in thread is: " + can_value);
+             //handler.postDelayed(this, 3000);
+        } catch (Exception e) {
+             can_value = 20;
+             Log.d(TAG, "Failed getting Can Value in thread", e);
+        }
+        try {
+             Message msg = new Message();
+             Bundle b = new Bundle();
+             b.putFloat("batKey", can_value);
+             msg.setData(b);
+             handler.sendMessage(msg);
+            Thread.sleep(10000);
+        } catch(InterruptedException e) {
+            // this part is executed when an exception (in this example InterruptedException) occurs
+        }
+   }
+   }
     /**
      * Callback for getting changes from {@link CarHvacManager} and setting the UI elements to
      * match.
@@ -64,6 +118,18 @@ public class HvacController {
     private final CarHvacEventCallback mHardwareCallback = new CarHvacEventCallback() {
         @Override
         public void onChangeEvent(final CarPropertyValue val) {
+            /*try {
+                candata = ICanData.getService(true);
+                if (candata != null) {
+                    can_value =  candata.getVersion();
+                    Log.d(TAG, "Can value is: " + can_value);
+                }
+            } catch (Exception e) {
+                // catch all so we don't take down the sysui if a new data type is
+                // introduced.
+                can_value = 100;
+                Log.d(TAG, "Failed getting Can Value", e);
+            }*/
             try {
                 int areaId = val.getAreaId();
                 int propertyId = val.getPropertyId();
@@ -72,10 +138,11 @@ public class HvacController {
                 if (temperatureViews != null && !temperatureViews.isEmpty()) {
                     float value = (float) val.getValue();
                     if (DEBUG) {
-                        Log.d(TAG, "onChangeEvent: " + areaId + ":" + propertyId + ":" + value);
+                        Log.d(TAG, "onChangeEvent2: " + areaId + ":" + propertyId + ":" + value);
                     }
                     for (TemperatureView tempView : temperatureViews) {
-                        tempView.setTemp(value);
+                        //tempView.setTemp(value);
+                        tempView.setTemp(can_value);
                     }
                 } // else the data is not of interest
             } catch (Exception e) {
@@ -167,7 +234,12 @@ public class HvacController {
                 view.setTemp(Float.NaN);
                 return;
             }
+            Log.d(TAG, "Setting default value - " + mHvacManager.getFloatProperty(id, zone));
+            tv = view;
+            //updateBattery(view);
             view.setTemp(mHvacManager.getFloatProperty(id, zone));
+            Thread t = new Thread(separateThread);
+            t.start();
         } catch (Exception e) {
             view.setTemp(Float.NaN);
             Log.e(TAG, "Failed to get value from hvac service", e);
@@ -188,6 +260,7 @@ public class HvacController {
      * controller if found.
      */
     public void addTemperatureViewToController(View v) {
+        Log.d(TAG, "Adding temp view to controller");
         if (v instanceof TemperatureView) {
             addHvacTextView((TemperatureView) v);
         } else if (v instanceof ViewGroup) {
